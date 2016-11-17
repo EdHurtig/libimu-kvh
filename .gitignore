@@ -1,3 +1,4 @@
 *.o
 *.a
-/BUILD/
+/BUILD/test
+config

@@ -19,7 +19,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
-#include <zlib.h>
 #include <errno.h>
 #include "crc.h"
 
