@@ -150,13 +150,37 @@ int imu_connect(const char * device) {
     return -1;
   }
 
-  struct termios opts;
 
-  tcgetattr(fd, &opts);
-  cfsetispeed(&opts, B921600);
-  cfsetospeed(&opts, B921600);
-  opts.c_cflag |= (CLOCAL | CREAD | CS8);
-  tcsetattr(fd, TCSANOW, &opts);
+  struct termios tty;
+
+  if (tcgetattr(fd, &tty) < 0) {
+      printf("Error from tcgetattr: %s\n", strerror(errno));
+      return -1;
+  }
+
+  cfsetospeed(&tty, (speed_t)B921600);
+  cfsetispeed(&tty, (speed_t)B921600);
+
+  tty.c_cflag |= (CLOCAL | CREAD);    /* ignore modem controls */
+  tty.c_cflag &= ~CSIZE;
+  tty.c_cflag |= CS8;         /* 8-bit characters */
+  tty.c_cflag &= ~PARENB;     /* no parity bit */
+  tty.c_cflag &= ~CSTOPB;     /* 1 Stop bit */
+  tty.c_cflag &= ~CRTSCTS;    /* no hardware flowcontrol */
+
+  /* setup for non-canonical mode */
+  tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
+  tty.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+  tty.c_oflag &= ~OPOST;
+
+  /* fetch bytes as they become available */
+  tty.c_cc[VMIN] = 1;
+  tty.c_cc[VTIME] = 1;
+
+  if (tcsetattr(fd, TCSANOW, &tty) != 0) {
+      printf("Error from tcsetattr: %s\n", strerror(errno));
+      return -1;
+  }
 
   return fd;
 }
@@ -167,6 +191,7 @@ int imu_disconnect(int fd) {
     fprintf(stderr, "IMU fd invalid");
     return -1;
   }
+
 
   // TODO: Reset Settings?
 
