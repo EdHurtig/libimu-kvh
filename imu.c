@@ -102,12 +102,6 @@ int imu_read(int fd, imu_datagram_t * gram) {
 
   serial_read(fd, &imubuf[4], 32);
 
-  int i;
-  for (i = 0; i < sizeof(imubuf); i++) {
-    printf("%x ", imubuf[i]);
-  }
-  printf("\n");
-
   // Massive Bit Shifting Operation.
   // See the example imu_datagram_t in the comment at the top of this file
   *gram = (imu_datagram_t){
@@ -138,7 +132,7 @@ int imu_connect(const char * device) {
   // note("Connecting to IMU at: %s", device);
   if (access(device, F_OK) != 0) {
     // error_no("device '%s' does not exist", device);
-    perror("Given IMU Device Does not exist");
+    printf("IMU Device '%s' does not exist: ", device, strerror(errno));
     return -1;
   }
 
