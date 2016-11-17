@@ -8,9 +8,9 @@
 int serial_port;
 
 #ifdef __linux__
-static const char *PORT_NAME = "/dev/ttyUSB0";
+static char *PORT_NAME = "/dev/ttyUSB0";
 #else
-static const char *PORT_NAME = "/dev/cu.usbserial-A600DTJI";
+static char *PORT_NAME = "/dev/cu.usbserial-A600DTJI";
 #endif
 
 #define SPINUP_ITER 10000
@@ -23,7 +23,13 @@ uint64_t getTime() {
   return (currentTime.tv_sec * 1000000ULL) + currentTime.tv_usec;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+  if (argc > 1) {
+    PORT_NAME = argv[1];
+  }
+
+  printf("[TEST] Connecting to: %s\n", PORT_NAME);
+
   int fd = imu_connect(PORT_NAME);
 
   if (fd < 0) {
@@ -39,7 +45,7 @@ int main() {
     imu_datagram_t data = {0};
   	imu_read(fd, &data);
 
-    printf("hd: %X\tx: %f\ty: %f\tz: %f\twx: %f\twy: %f\twz: %f\t seq: %d\t stat: %X\t tp: %u\t crc: %X \t ckc: %X\t t: %llu\n", data.hd, data.x, data.y, data.z, data.wx, data.wy, data.wz, data.sequence, data.status, data.temperature, data.actual_crc, data.computed_crc, getTime());
+    printf("[TEST] hd: %X\tx: %f\ty: %f\tz: %f\twx: %f\twy: %f\twz: %f\t seq: %d\t stat: %X\t tp: %u\t crc: %X \t ckc: %X\t t: %llu\n", data.hd, data.x, data.y, data.z, data.wx, data.wy, data.wz, data.sequence, data.status, data.temperature, data.actual_crc, data.computed_crc, getTime());
     #define CONFIG_CMD "=config,1\n"
 
 
@@ -68,7 +74,7 @@ int main() {
       fflush(stdout);
     } else {
       if (i % 1000 == 0) {
-        printf("Spinning Up %d/%d\n", i, SPINUP_ITER);
+        printf("[TEST] Spinning Up %d/%d\n", i, SPINUP_ITER);
       }
       i++;
     }

@@ -6,10 +6,10 @@ all: $(OBJECTS)
 	ar rcs libimu.a $(OBJECTS)
 
 test: all test.o
-	$(CC) -limu -L. test.o -o test
+	$(CC) test.o -o test -limu -L. 
 
 config: all config.o
-	$(CC) -limu -L. config.o -o config
+	$(CC) config.o -o config -limu -L.
 
 debug: test config all
 
@@ -25,4 +25,4 @@ install-debug: install
 	install -m 755 ./config $(DSTROOT)/usr/local/bin
 
 clean:
-	rm -rf BUILD test config *.o
+	rm -rf BUILD test config *.o *.a
