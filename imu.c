@@ -74,10 +74,17 @@ int serial_read(int fd, unsigned char *buf, int n) {
     int _r = read(fd, &buf[r], n - r);
 
     if (_r < 0) {
+      // if (errno == EAGAIN) {
+      //   // Read Again, return total bytes so far
       return r;
+      // }
+      // // Not Read Again, hard error
+      // exit(101);
+      // return -1;
     }
     r += _r;
   }
+  // Success, read all n bytes
   return r;
 }
 
@@ -88,17 +95,19 @@ int imu_read(int fd, imu_datagram_t * gram) {
   if (remaining > 0) {
     int r = serial_read(fd, &imubuf[imubufc], remaining);
     assert(r <= IMU_MESSAGE_SIZE);
-    assert(r > -2);
+    assert(r >= -1);
     imubufc += r;
-    if (r > 0) {
-      printf("READ: %d bytes\n", r);
-    }
-    if (r < remaining) {
+
+    if (r == -1) {
+      memset(gram, 0, sizeof(imu_datagram_t));
+      return -1;
+    } else if (r < remaining) {
       // for (i=0; i<imubufc; i++) {
       //   printf("%x ", imubuf[i]);
       // }
       assert(imubufc < 36);
-      return -1;
+      memset(gram, 0, sizeof(imu_datagram_t));
+      return 0;
     }
     assert(imubufc == 36);
   }
@@ -125,6 +134,7 @@ int imu_read(int fd, imu_datagram_t * gram) {
     for (i=0; i<imubufc; i++) {
       imubuf[i] = imubuf[i+1];
     }
+    memset(gram, 0, sizeof(imu_datagram_t));
     return -1;
   }
 
@@ -145,7 +155,9 @@ int imu_read(int fd, imu_datagram_t * gram) {
     .computed_crc = crc_calc(&imubuf[0], 32)
   };
 
-  return 0;
+  imubufc = 0;
+
+  return 1;
 }
 
 

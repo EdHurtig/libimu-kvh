@@ -98,12 +98,17 @@ int main(int argc, char *argv[]) {
 
   crc_generate_table();
   imu_datagram_t average = {0};
-
+  uint64_t start = getTime();
   while (i < config.iterations || config.iterations == 0) {
     imu_datagram_t data = {0};
-  	int success = imu_read(fd, &data);
 
-    if (!config.quiet && success >= 0) {
+    int success = 0;
+    while (success == 0) {
+      // Loop until error or good read
+      success = imu_read(fd, &data);
+    }
+
+    if (!config.quiet && success > 0) {
       printf("[TEST] hd: %X\tx: %f\ty: %f\tz: %f\twx: %f\twy: %f\twz: %f\t seq: %d\t stat: %X\t tp: %u\t crc: %X \t ckc: %X\t t: %llu\n", data.hd, data.x, data.y, data.z, data.wx, data.wy, data.wz, data.sequence, data.status, data.temperature, data.crc, data.computed_crc, getTime());
     }
 
@@ -114,7 +119,7 @@ int main(int argc, char *argv[]) {
     average.wy = (average.wy + data.wy) / 2.0;
     average.wz = (average.wz + data.wz) / 2.0;
 
-    if (i > config.spinup) {
+    if (i >= config.spinup) {
       if (success < 0) {
         fprintf(stderr, "[FAIL] [%d] IMU Read Failed\n", i);
         if (config.stop_on_fail) {
@@ -155,23 +160,29 @@ int main(int argc, char *argv[]) {
         }
       }
 
+      l = data.sequence;
+
       if (data.temperature < 20 || data.temperature > 50) {
         fprintf(stderr, "[FAIL] [%d] temperature warning. force stop (max 65)\n", i);
         finish(1, fd);
       }
       fflush(stdout);
 
-    } else if (i == config.spinup){
+    } else if (i == (config.spinup - 1)){
       fprintf(stderr, "[NOTE] Spinup complete %d/%d\n", i, config.spinup);
+      l = data.sequence;
     } else {
       if (i % 1000 == 0) {
         fprintf(stderr, "[NOTE] Spinning Up %d/%d\n", i, config.spinup);
       }
     }
     i++;
-    l = data.sequence;
   }
+  uint64_t end = getTime();
   printf("[AVERAGE] x: %f\ty: %f\tz: %f\twx: %f\twy: %f\twz: %f\n", average.x, average.y, average.z, average.wx, average.wy, average.wz);
+
+  double seconds = (end - start) / 1000000.0;
+  printf("[TIME] %lf seconds. %d packets processed %lf packets / second", seconds, i, (double)i / seconds);
 
   if (poop > 0) {
     fprintf(stderr, "Found %d errors out of %d iterations, %d skipped. %f%%\n",
