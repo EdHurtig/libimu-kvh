@@ -74,13 +74,8 @@ int serial_read(int fd, unsigned char *buf, int n) {
     int _r = read(fd, &buf[r], n - r);
 
     if (_r < 0) {
-      // if (errno == EAGAIN) {
-      //   // Read Again, return total bytes so far
+      // TODO: Check errno for EAGAIN
       return r;
-      // }
-      // // Not Read Again, hard error
-      // exit(101);
-      // return -1;
     }
     r += _r;
   }
@@ -163,6 +158,8 @@ int imu_read(int fd, imu_datagram_t * gram) {
 
 // Connect the serial device for the IMU
 int imu_connect(const char * device) {
+  crc_generate_table();
+
   // note("Connecting to IMU at: %s", device);
   if (access(device, F_OK) != 0) {
     // error_no("device '%s' does not exist", device);

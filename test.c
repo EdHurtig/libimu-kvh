@@ -96,7 +96,6 @@ int main(int argc, char *argv[]) {
   int i = 0;
   int poop = 0;
 
-  crc_generate_table();
   imu_datagram_t average = {0};
   uint64_t start = getTime();
   while (i < config.iterations || config.iterations == 0) {
