@@ -1,15 +1,14 @@
 OBJECTS= imu.o crc.o
-LDFLAGS += -lz
+LDFLAGS += -L.
+LDLIBS += -limu
 DSTROOT= ./BUILD/dst
 
 all: $(OBJECTS)
 	ar rcs libimu.a $(OBJECTS)
 
-test: all test.o
-	$(CC) test.o -o test -limu -L. 
+test: test.o
 
-config: all config.o
-	$(CC) config.o -o config -limu -L.
+config: config.o
 
 debug: test config all
 

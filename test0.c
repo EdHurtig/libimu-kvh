@@ -45,7 +45,7 @@ void usage() {
 void parse_args(int argc, char *argv[], config_t * config) {
   int ch;
 
-  while ((ch = getopt(argc, argv, "d:i:s:qf")) != -1) {
+  while ((ch = getopt(argc, argv, "d:i:s:qs")) != -1) {
     switch (ch) {
     case 'd':
       config->device = optarg;
@@ -99,12 +99,12 @@ int main(int argc, char *argv[]) {
   crc_generate_table();
   imu_datagram_t average = {0};
 
-  while (i < config.iterations || config.iterations == 0) {
+  while (i < config.iterations) {
     imu_datagram_t data = {0};
-  	int success = imu_read(fd, &data);
+  	imu_read(fd, &data);
 
-    if (!config.quiet && success >= 0) {
-      printf("[TEST] hd: %X\tx: %f\ty: %f\tz: %f\twx: %f\twy: %f\twz: %f\t seq: %d\t stat: %X\t tp: %u\t crc: %X \t ckc: %X\t t: %llu\n", data.hd, data.x, data.y, data.z, data.wx, data.wy, data.wz, data.sequence, data.status, data.temperature, data.crc, data.computed_crc, getTime());
+    if (!config.quiet) {
+      printf("[TEST] hd: %X\tx: %f\ty: %f\tz: %f\twx: %f\twy: %f\twz: %f\t seq: %d\t stat: %X\t tp: %u\t crc: %X \t ckc: %X\t t: %llu\n", data.hd, data.x, data.y, data.z, data.wx, data.wy, data.wz, data.sequence, data.status, data.temperature, data.actual_crc, data.computed_crc, getTime());
     }
 
     average.x = (average.x + data.x) / 2.0;
@@ -115,18 +115,7 @@ int main(int argc, char *argv[]) {
     average.wz = (average.wz + data.wz) / 2.0;
 
     if (i > config.spinup) {
-      if (success < 0) {
-        fprintf(stderr, "[FAIL] [%d] IMU Read Failed\n", i);
-        if (config.stop_on_fail) {
-          finish(1, fd);
-        } else {
-          poop++;
-          i++;
-          continue; // Skip the rest of the checks for this read
-        }
-      }
-
-      if (data.crc != data.computed_crc) {
+      if (data.actual_crc != data.computed_crc) {
         fprintf(stderr, "[FAIL] [%d] CRC error\n", i);
         if (config.stop_on_fail) {
           finish(1, fd);

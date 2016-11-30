@@ -20,12 +20,25 @@
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <assert.h>
 #include "crc.h"
 
 #define IMU_MESSAGE_SIZE 36
 
 #ifndef B921600
 #define B921600 921600
+#endif
+
+#ifndef IMU_TEMP_MIN
+#define IMU_TEMP_MIN 0
+#endif
+
+#ifndef IMU_TEMP_MAX
+#define IMU_TEMP_MAX 65
+#endif
+
+#ifndef IMU_STATUS_OK
+#define IMU_STATUS_OK 0x77
 #endif
 
 union bytes_to_float
@@ -50,7 +63,7 @@ union bytes_to_float
 // };
 
 unsigned char imubuf[IMU_MESSAGE_SIZE] = {0};
-
+unsigned int imubufc = 0;
 /**
  * fills the buffer pointed to (should be imubuf) until it contains n elements
  */
@@ -61,10 +74,7 @@ int serial_read(int fd, unsigned char *buf, int n) {
     int _r = read(fd, &buf[r], n - r);
 
     if (_r < 0) {
-      if (errno != EAGAIN) {
-        perror("===Read Failed===");
-        return -1;
-      }
+      return r;
     }
     r += _r;
   }
@@ -72,35 +82,51 @@ int serial_read(int fd, unsigned char *buf, int n) {
 }
 
 int imu_read(int fd, imu_datagram_t * gram) {
+  int i = 0;
+  int remaining = IMU_MESSAGE_SIZE - imubufc;
 
-  while (1) {
-    if (serial_read(fd, &imubuf[0], 1) < 0) {
+  if (remaining > 0) {
+    int r = serial_read(fd, &imubuf[imubufc], remaining);
+    assert(r <= IMU_MESSAGE_SIZE);
+    assert(r > -2);
+    imubufc += r;
+    if (r > 0) {
+      printf("READ: %d bytes\n", r);
+    }
+    if (r < remaining) {
+      // for (i=0; i<imubufc; i++) {
+      //   printf("%x ", imubuf[i]);
+      // }
+      assert(imubufc < 36);
       return -1;
     }
+    assert(imubufc == 36);
+  }
+
+  assert(imubufc == 36);
+
+  unsigned char ideal[4] = {0xFE, 0x81, 0xFF,0x55};
+  assert(imubufc == 36);
 
 
-    unsigned char ideal[4] = {0xFE, 0x81, 0xFF,0x55};
-
-    if (imubuf[0] == ideal[0]) {
-      if (serial_read(fd, &imubuf[1], 3) < 0) {
-        return -1;
-      }
-
-      int i;
-      int success = 1;
-      for (i = 1; i < 4; i++) {
-        if (imubuf[i] != ideal[i]) {
-          success = 0;
-        }
-      }
-
-      if (success) {
-        break;
-      }
+  int success = 1;
+  assert(imubufc == 36);
+  for (i = 0; i < 4; i++) {
+    assert(imubufc == 36);
+    if (imubuf[i] != ideal[i]) {
+      success = 0;
     }
   }
 
-  serial_read(fd, &imubuf[4], 32);
+  assert(imubufc == 36);
+  if (!success) {
+    imubufc--;
+    assert(imubufc == 35);
+    for (i=0; i<imubufc; i++) {
+      imubuf[i] = imubuf[i+1];
+    }
+    return -1;
+  }
 
   // Massive Bit Shifting Operation.
   // See the example imu_datagram_t in the comment at the top of this file
@@ -115,15 +141,11 @@ int imu_read(int fd, imu_datagram_t * gram) {
     .status = imubuf[28],
     .sequence = imubuf[29],
     .temperature = (imubuf[30] << 8) | (imubuf[31]),
-    .actual_crc = (imubuf[32] << 24) | (imubuf[33] << 16) | (imubuf[34] << 8) | (imubuf[35] << 0),
+    .crc = (imubuf[32] << 24) | (imubuf[33] << 16) | (imubuf[34] << 8) | (imubuf[35] << 0),
     .computed_crc = crc_calc(&imubuf[0], 32)
   };
 
-  if(gram->status == 0x77) {
-    return 0;
-  } else {
-    return -1;
-  }
+  return 0;
 }
 
 
@@ -136,7 +158,7 @@ int imu_connect(const char * device) {
     return -1;
   }
 
-  int fd = open(device, O_RDWR);
+  int fd = open(device, O_RDWR | O_NONBLOCK);
 
   if (fd < 0) {
     perror("IMU connect failed");
@@ -189,4 +211,12 @@ int imu_disconnect(int fd) {
   // TODO: Reset Settings?
 
   return close(fd);
+}
+
+int imu_valid(imu_datagram_t * data) {
+  return (data->crc == data->computed_crc) && (data->status == IMU_STATUS_OK);
+}
+
+int imu_ok(imu_datagram_t * data) {
+  return (data->temperature > IMU_TEMP_MIN && data->temperature < IMU_TEMP_MAX);
 }

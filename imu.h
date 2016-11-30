@@ -42,7 +42,7 @@ typedef struct imu_datagram {
   // temperature
   uint16_t temperature;
   // CRC check (actual)
-  uint32_t actual_crc;
+  uint32_t crc;
   // CRC check (computed)
   uint32_t computed_crc;
 } imu_datagram_t;
@@ -75,5 +75,24 @@ int imu_disconnect(const int fd);
  * @return 0 on success, -1 on failure
  */
 int imu_read(int fd, imu_datagram_t * data);
+
+
+/**
+ * Determines whether the given imu_datagram_t has a valid CRC and status
+ *
+ * @param data Pointer to an imu_datagram_t to validate
+ *
+ * @return 1 if valid, 0 if invalid
+ */
+int imu_valid(imu_datagram_t * data);
+
+/**
+ * Determines if the IMU is in an OK state based on the given imu_datagram_t
+ *
+ * @param data A pointer to an imu_datagram_t
+ *
+ * @return 1 if IMU is OK, 0 if it is not OK
+ */
+int imu_ok(imu_datagram_t * data);
 
 #endif
