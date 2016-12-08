@@ -163,7 +163,7 @@ int imu_connect(const char * device) {
   // note("Connecting to IMU at: %s", device);
   if (access(device, F_OK) != 0) {
     // error_no("device '%s' does not exist", device);
-    printf("IMU Device '%s' does not exist: ", device, strerror(errno));
+    printf("IMU Device '%s' does not exist: %s\n", device, strerror(errno));
     return -1;
   }
 
@@ -212,7 +212,7 @@ int imu_connect(const char * device) {
 // Connect the serial device for the IMU
 int imu_disconnect(int fd) {
   if (fd < 0) {
-    fprintf(stderr, "IMU fd invalid");
+    fprintf(stderr, "IMU fd invalid\n");
     return -1;
   }
 
