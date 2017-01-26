@@ -161,8 +161,8 @@ int main(int argc, char *argv[]) {
 
       l = data.sequence;
 
-      if (data.temperature < 20 || data.temperature > 50) {
-        fprintf(stderr, "[FAIL] [%d] temperature warning. force stop (max 65)\n", i);
+      if (data.temperature < -20 || data.temperature > 50) {
+        fprintf(stderr, "[FAIL] [%d] temperature warning (%dC). (min -20C, max 50C)\n", i, data.temperature);
         finish(1, fd);
       }
       fflush(stdout);

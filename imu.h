@@ -40,7 +40,7 @@ typedef struct imu_datagram {
   // status
   uint8_t status;
   // temperature
-  uint16_t temperature;
+  int16_t temperature;
   // CRC check (actual)
   uint32_t crc;
   // CRC check (computed)

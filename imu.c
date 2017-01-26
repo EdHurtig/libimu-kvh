@@ -30,11 +30,11 @@
 #endif
 
 #ifndef IMU_TEMP_MIN
-#define IMU_TEMP_MIN 0
+#define IMU_TEMP_MIN -40
 #endif
 
 #ifndef IMU_TEMP_MAX
-#define IMU_TEMP_MAX 65
+#define IMU_TEMP_MAX 75
 #endif
 
 #ifndef IMU_STATUS_OK
@@ -59,7 +59,7 @@ union bytes_to_float
 //   0x01, 0x23, 0x45, 0x65, // Z linear  (4 Bytes to form a float)
 //   0xEE, // Status (each bit wx, wy, wz, reserved, ax, ay, az, reserved)
 //   0xFF, // sequence number (0-127 wraps)
-//   0x00, 0x01 // temperature bits (UInt16)
+//   0x00, 0x01 // temperature bits (Int16)
 // };
 
 unsigned char imubuf[IMU_MESSAGE_SIZE] = {0};

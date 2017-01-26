@@ -10,7 +10,7 @@ test: test.o
 
 config: config.o
 
-debug: test config all
+debug: all test config
 
 install:
 	mkdir -p $(DSTROOT)/usr/local/lib
