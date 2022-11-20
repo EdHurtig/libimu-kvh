@@ -1,6 +1,8 @@
 # libimu-private
 
-OpenLoop IMU Implementation
+OpenLoop Implementation for the KVH-1725 FOG IMU.  This library runs on Linux and macOS and parses the KVH datastream.
+
+See the `imu_config` and `imu_test` tools in the [hyperloop](https://github.com/ParadigmHyperloop/hyperloop) repo 
 
 
 # Build
