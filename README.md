@@ -4,6 +4,7 @@ OpenLoop Implementation for the KVH-1725 FOG IMU.  This library runs on Linux an
 
 See the `imu_config` and `imu_test` tools in the [hyperloop](https://github.com/ParadigmHyperloop/hyperloop) repo 
 
+<img width="1871" alt="image" src="https://user-images.githubusercontent.com/1410448/202876803-c29b8e49-74ce-497e-9be4-067dd44d54da.png">
 
 # Build
 
