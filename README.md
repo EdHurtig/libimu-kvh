@@ -1,4 +1,4 @@
-# libimu-private
+# libimu-kvh
 
 OpenLoop Implementation for the KVH-1725 FOG IMU.  This library runs on Linux and macOS and parses the KVH datastream.
 
