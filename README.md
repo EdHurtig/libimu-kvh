@@ -32,9 +32,3 @@ config    test
 You can use the `config` program to put your KVH IMU into config mode then issue it commands.  See [config.log](config.log).
 
 You can use the `test` program to verify that your IMU is performing nominally.
-
-# License
-
-Closed Source, Copyright 2016 Eddie Hurtig and The OpenLoop Alliance
-
-DO NOT REDISTRIBUTE
